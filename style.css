@@ -1,6 +1,11 @@
-#demoCanvas {
+body{
+	text-align:center;
+}
+
+.demoCanvas {
   background-color: #00AA00;
   border: 1px solid #CCCCCC;
+  text-align:center;
 }
 
 #maindiv{
