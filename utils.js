@@ -22,6 +22,59 @@ function calculateIntersection(rect1, rect2, x, y)
   }
 }
 
+
+function calculateCollision(obj, direction, collideables, moveBy)
+{
+      moveBy = moveBy || {x:0,y:0};
+      if ( direction != 'x' && direction != 'y' ) {
+        direction = 'x';
+      }
+      var measure = direction == 'x' ? 'width' : 'height',
+        oppositeDirection = direction == 'x' ? 'y' : 'x',
+        oppositeMeasure = direction == 'x' ? 'height' : 'width',
+
+        bounds = getBounds(obj),
+        cbounds,
+        collision = null,
+        cc = 0;
+
+    // for each collideable object we will calculate the
+    // bounding-rectangle and then check for an intersection
+    // of the hero's future position's bounding-rectangle
+    while ( !collision && cc < collideables.length ) {
+      cbounds = getBounds(collideables[cc]);
+      if ( collideables[cc].isVisible ) {
+        collision = calculateIntersection(bounds, cbounds, moveBy.x, moveBy.y);
+      }
+
+      if ( !collision && collideables[cc].isVisible ) {
+        // if there was NO collision detected, but somehow
+        // the hero got onto the "other side" of an object (high velocity e.g.),
+        // then we will detect this here, and adjust the velocity according to
+        // it to prevent the Hero from "ghosting" through objects
+        // try messing with the 'this.velocity = {x:0,y:125};'
+        // -> it should still collide even with very high values
+        var wentThroughForwards  = ( bounds[direction] < cbounds[direction] && bounds[direction] + moveBy[direction] > cbounds[direction] ),
+          wentThroughBackwards = ( bounds[direction] > cbounds[direction] && bounds[direction] + moveBy[direction] < cbounds[direction] ),
+          withinOppositeBounds = !(bounds[oppositeDirection]+bounds[oppositeMeasure] < cbounds[oppositeDirection])
+                    && !(bounds[oppositeDirection] > cbounds[oppositeDirection]+cbounds[oppositeMeasure]);
+
+        if ( (wentThroughForwards || wentThroughBackwards) && withinOppositeBounds ) {
+          moveBy[direction] = cbounds[direction] - bounds[direction];
+        } else {
+          cc++;
+        }
+      }
+    }
+
+    if ( collision ) {
+      var sign = Math.abs(moveBy[direction]) / moveBy[direction];
+      moveBy[direction] -= collision[measure] * sign;
+    }
+
+    return collision;
+}
+
 /*
  * Calculated the boundaries of an object.
  *
